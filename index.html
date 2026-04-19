@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+
+<title>Gym App</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+margin:0;
+padding:20px;
+text-align:center;
+}
+
+h1{
+margin-bottom:5px;
+}
+
+#info{
+margin-bottom:10px;
+}
+
+.card{
+background:#1e293b;
+padding:15px;
+margin:10px;
+border-radius:12px;
+}
+
+button{
+padding:8px 14px;
+margin:5px;
+border:none;
+border-radius:8px;
+font-size:16px;
+}
+
+.ok{
+background:#22c55e;
+color:white;
+}
+
+.bad{
+background:#ef4444;
+color:white;
+}
+
+#progreso{
+height:20px;
+background:#334155;
+border-radius:10px;
+margin:10px 0;
+overflow:hidden;
+}
+
+#barra{
+height:100%;
+width:0%;
+background:#22c55e;
+}
+
+#logros{
+font-size:18px;
+margin-top:10px;
+}
+
+#racha{
+font-size:18px;
+}
+
+#nivel{
+font-size:20px;
+margin:10px;
+}
+
+</style>
+
+</head>
+<body>
+
+<h1>🏋️ Gym App</h1>
+
+<h3 id="info"></h3>
+
+<div id="progreso">
+<div id="barra"></div>
+</div>
+
+<div id="logros"></div>
+<div id="racha"></div>
+<div id="nivel"></div>
+
+<div id="app"></div>
+
+<br>
+
+<button onclick="guardarSemana()">Guardar Semana</button>
+<button onclick="verMeses()">Ver Meses</button>
+
+<div id="historial"></div>
+
+<script>
+
+let rutina={
+"Lunes":[
+"Press inclinado con barra",
+"Press plano",
+"Aperturas polea",
+"Fondos paralelas",
+"Plancha abdominal",
+"Russian twists"
+],
+
+"Martes":[
+"Jalón al pecho",
+"Remo máquina",
+"Face pull",
+"Curl bíceps polea",
+"Curl martillo"
+],
+
+"Miércoles":[
+"Prensa inclinada",
+"Hack squat",
+"Sentadilla smith",
+"Extensión cuadríceps",
+"Curl femoral",
+"Aductores",
+"Glute machine"
+],
+
+"Jueves":[
+"Press militar máquina",
+"Elevaciones laterales",
+"Press Arnold",
+"Tríceps polea",
+"Fondos banco",
+"Crunch máquina"
+],
+
+"Viernes":[
+"Press plano barra",
+"Aperturas mancuernas",
+"Crossover polea",
+"Curl barra Z",
+"Tríceps mancuerna",
+"Flexiones arqueadas"
+]
+};
+
+let semana=JSON.parse(localStorage.getItem("semana"))||{};
+let semanasMes=JSON.parse(localStorage.getItem("semanasMes"))||[];
+let meses=JSON.parse(localStorage.getItem("meses"))||[];
+
+let racha=Number(localStorage.getItem("racha"))||0;
+let ultimoDia=localStorage.getItem("ultimoDia")||"";
+
+function mostrarLogros(p){
+
+let texto="";
+
+if(p===100) texto="🏆 Semana perfecta";
+else if(p>=70) texto="💪 Muy buen progreso";
+else if(p>=50) texto="😐 Bien pero puedes mejorar";
+else texto="⚠️ Vamos no te rindas";
+
+document.getElementById("logros").innerText=texto;
+
+}
+
+function actualizarRacha(p){
+
+let hoy=new Date().toDateString();
+
+if(p>=70){
+
+if(ultimoDia!==hoy){
+
+racha++;
+ultimoDia=hoy;
+
+localStorage.setItem("racha",racha);
+localStorage.setItem("ultimoDia",hoy);
+
+}
+
+}else{
+
+racha=0;
+localStorage.setItem("racha",racha);
+
+}
+
+document.getElementById("racha").innerText="🔥 Racha: "+racha+" días";
+
+}
+
+function mostrarNivel(p){
+
+let nivel="";
+
+if(p>=90) nivel="🔥 Nivel: Bestia del Gym";
+else if(p>=70) nivel="🏋️ Nivel: Atleta";
+else if(p>=50) nivel="💪 Nivel: Constante";
+else nivel="🐣 Nivel: Novato";
+
+document.getElementById("nivel").innerText=nivel;
+
+}
+
+function marcar(dia,i,v){
+
+if(!semana[dia]) semana[dia]=[];
+
+semana[dia][i]=v;
+
+localStorage.setItem("semana",JSON.stringify(semana));
+
+render();
+
+}
+
+function render(){
+
+let app=document.getElementById("app");
+app.innerHTML="";
+
+let total=0;
+let ok=0;
+
+for(let d in rutina){
+
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML="<h3>"+d+"</h3>";
+
+rutina[d].forEach((e,i)=>{
+
+total++;
+
+let estado=semana[d]?.[i];
+
+if(estado) ok++;
+
+card.innerHTML+=`
+<p>${e}
+<button class="ok" onclick="marcar('${d}',${i},true)">✔</button>
+<button class="bad" onclick="marcar('${d}',${i},false)">✖</button>
+</p>
+`;
+
+});
+
+app.appendChild(card);
+
+}
+
+let p=Math.round((ok/total)*100)||0;
+
+document.getElementById("barra").style.width=p+"%";
+
+document.getElementById("info").innerText="Progreso: "+p+"%";
+
+mostrarLogros(p);
+actualizarRacha(p);
+mostrarNivel(p);
+
+}
+
+function guardarSemana(){
+
+semanasMes.push(semana);
+
+localStorage.setItem("semanasMes",JSON.stringify(semanasMes));
+
+semana={};
+localStorage.removeItem("semana");
+
+if(semanasMes.length===4){
+
+meses.push(semanasMes);
+
+localStorage.setItem("meses",JSON.stringify(meses));
+
+alert("Mes terminado");
+
+semanasMes=[];
+localStorage.removeItem("semanasMes");
+
+verMeses();
+
+}
+
+render();
+
+}
+
+function verMeses(){
+
+let cont=document.getElementById("historial");
+
+if(meses.length===0){
+
+cont.innerHTML="<p>No hay meses aún</p>";
+return;
+
+}
+
+cont.innerHTML="<h2>Historial</h2>";
+
+meses.forEach((m,i)=>{
+
+let total=0;
+let ok=0;
+
+m.forEach(s=>{
+
+for(let d in s){
+
+s[d].forEach(e=>{
+
+if(e!==undefined){
+
+total++;
+if(e) ok++;
+
+}
+
+});
+
+}
+
+});
+
+let p=Math.round((ok/total)*100)||0;
+
+let msg=p>=80?"🔥 Excelente":p>=50?"😐 Regular":"❌ Malo";
+
+cont.innerHTML+=`<p>Mes ${i+1}: ${p}% ${msg}</p>`;
+
+});
+
+}
+
+render();
+
+</script>
+
+<script>
+
+if("serviceWorker" in navigator){
+
+navigator.serviceWorker.register("sw.js");
+
+}
+
+</script>
+
+</body>
+</html>
