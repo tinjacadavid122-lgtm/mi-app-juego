@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+<!-- ================= CONFIGURACIÓN BÁSICA ================= -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Permite instalar la app como aplicación en el celular -->
 <link rel="manifest" href="manifest.json">
 
 <title>Gym App</title>
 
 <style>
+
+/* ================= ESTILOS GENERALES ================= */
 
 body{
 font-family:Arial;
@@ -19,14 +24,11 @@ padding:20px;
 text-align:center;
 }
 
-h1{
-margin-bottom:5px;
-}
+h1{margin-bottom:5px;}
 
-#info{
-margin-bottom:10px;
-}
+#info{margin-bottom:10px;}
 
+/* Tarjeta donde se muestran los ejercicios */
 .card{
 background:#1e293b;
 padding:15px;
@@ -34,24 +36,34 @@ margin:10px;
 border-radius:12px;
 }
 
+/* Botones generales */
 button{
-padding:8px 14px;
+padding:12px 18px;
 margin:5px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 font-size:16px;
 }
 
+/* Botón ejercicio completado */
 .ok{
 background:#22c55e;
 color:white;
 }
 
+/* Botón ejercicio no realizado */
 .bad{
 background:#ef4444;
 color:white;
 }
 
+/* Botón reiniciar progreso */
+.reset{
+background:#f59e0b;
+color:white;
+}
+
+/* Barra de progreso general */
 #progreso{
 height:20px;
 background:#334155;
@@ -60,24 +72,29 @@ margin:10px 0;
 overflow:hidden;
 }
 
+/* Parte verde de la barra */
 #barra{
 height:100%;
 width:0%;
 background:#22c55e;
 }
 
-#logros{
-font-size:18px;
-margin-top:10px;
-}
+/* Texto de logros */
+#logros{font-size:18px;margin-top:10px;}
 
-#racha{
-font-size:18px;
-}
+/* Texto racha */
+#racha{font-size:18px;}
 
-#nivel{
-font-size:20px;
-margin:10px;
+/* Texto nivel */
+#nivel{font-size:20px;margin:10px;}
+
+/* Vista previa del siguiente día */
+.preview{
+background:#020617;
+padding:15px;
+border-radius:12px;
+margin-top:15px;
+opacity:0.7;
 }
 
 </style>
@@ -85,30 +102,42 @@ margin:10px;
 </head>
 <body>
 
+<!-- ================= TÍTULO ================= -->
 <h1>🏋️ Gym App</h1>
 
+<!-- Información del progreso -->
 <h3 id="info"></h3>
 
+<!-- Barra visual de progreso -->
 <div id="progreso">
 <div id="barra"></div>
 </div>
 
+<!-- Mensajes motivacionales -->
 <div id="logros"></div>
 <div id="racha"></div>
 <div id="nivel"></div>
 
+<!-- Aquí se renderiza el día actual -->
 <div id="app"></div>
 
 <br>
 
+<!-- Botones principales -->
 <button onclick="guardarSemana()">Guardar Semana</button>
 <button onclick="verMeses()">Ver Meses</button>
+<button class="reset" onclick="reiniciarTodo()">🔄 Reiniciar progreso</button>
 
+<!-- Historial de meses -->
 <div id="historial"></div>
 
 <script>
 
+// ================= RUTINA DE ENTRENAMIENTO =================
+// Aquí se definen todos los ejercicios por día
+
 let rutina={
+
 "Lunes":[
 "Press inclinado con barra",
 "Press plano",
@@ -153,14 +182,77 @@ let rutina={
 "Tríceps mancuerna",
 "Flexiones arqueadas"
 ]
+
 };
 
+
+// ================= VARIABLES DE GUARDADO =================
+
+// progreso semanal
 let semana=JSON.parse(localStorage.getItem("semana"))||{};
+
+// semanas dentro de un mes
 let semanasMes=JSON.parse(localStorage.getItem("semanasMes"))||[];
+
+// historial de meses
 let meses=JSON.parse(localStorage.getItem("meses"))||[];
 
+// racha de entrenamiento
 let racha=Number(localStorage.getItem("racha"))||0;
+
+// último día registrado
 let ultimoDia=localStorage.getItem("ultimoDia")||"";
+
+// orden de los días
+let dias=Object.keys(rutina);
+
+
+// ================= FUNCIÓN PARA MARCAR EJERCICIO =================
+
+function marcar(dia,i,v){
+
+// si el día aún no existe se crea
+if(!semana[dia]) semana[dia]=[];
+
+// guarda true o false
+semana[dia][i]=v;
+
+// guarda en el navegador
+localStorage.setItem("semana",JSON.stringify(semana));
+
+// vuelve a dibujar la app
+render();
+
+}
+
+
+// ================= CALCULAR PROGRESO =================
+
+function calcularProgreso(){
+
+let total=0;
+let ok=0;
+
+for(let d in rutina){
+
+rutina[d].forEach((e,i)=>{
+
+// cuenta ejercicios totales
+ total++;
+
+// revisa si está completado
+if(semana[d]?.[i]) ok++;
+
+});
+
+}
+
+return Math.round((ok/total)*100)||0;
+
+}
+
+
+// ================= MENSAJES MOTIVACIONALES =================
 
 function mostrarLogros(p){
 
@@ -175,10 +267,14 @@ document.getElementById("logros").innerText=texto;
 
 }
 
+
+// ================= SISTEMA DE RACHA =================
+
 function actualizarRacha(p){
 
 let hoy=new Date().toDateString();
 
+// si el progreso es bueno aumenta racha
 if(p>=70){
 
 if(ultimoDia!==hoy){
@@ -193,6 +289,7 @@ localStorage.setItem("ultimoDia",hoy);
 
 }else{
 
+// si fallas se reinicia
 racha=0;
 localStorage.setItem("racha",racha);
 
@@ -201,6 +298,9 @@ localStorage.setItem("racha",racha);
 document.getElementById("racha").innerText="🔥 Racha: "+racha+" días";
 
 }
+
+
+// ================= NIVEL DE ENTRENAMIENTO =================
 
 function mostrarNivel(p){
 
@@ -215,75 +315,114 @@ document.getElementById("nivel").innerText=nivel;
 
 }
 
-function marcar(dia,i,v){
 
-if(!semana[dia]) semana[dia]=[];
+// ================= DETERMINAR DÍA ACTUAL =================
 
-semana[dia][i]=v;
+function obtenerDiaActual(){
 
-localStorage.setItem("semana",JSON.stringify(semana));
+for(let i=0;i<dias.length;i++){
 
-render();
+let d=dias[i];
+
+let ejercicios=rutina[d];
+
+let completos=ejercicios.every((e,j)=>semana[d]?.[j]===true);
+
+// si no está completo ese es el día actual
+if(!completos) return i;
 
 }
+
+return dias.length-1;
+
+}
+
+
+// ================= RENDER PRINCIPAL =================
 
 function render(){
 
 let app=document.getElementById("app");
 app.innerHTML="";
 
-let total=0;
-let ok=0;
+let indexDia=obtenerDiaActual();
 
-for(let d in rutina){
+let diaActual=dias[indexDia];
 
 let card=document.createElement("div");
 card.className="card";
 
-card.innerHTML="<h3>"+d+"</h3>";
+card.innerHTML="<h2>📅 "+diaActual+"</h2>";
 
-rutina[d].forEach((e,i)=>{
-
-total++;
-
-let estado=semana[d]?.[i];
-
-if(estado) ok++;
+// ejercicios del día actual
+rutina[diaActual].forEach((e,i)=>{
 
 card.innerHTML+=`
 <p>${e}
-<button class="ok" onclick="marcar('${d}',${i},true)">✔</button>
-<button class="bad" onclick="marcar('${d}',${i},false)">✖</button>
-</p>
-`;
+<button class="ok" onclick="marcar('${diaActual}',${i},true)">✔</button>
+<button class="bad" onclick="marcar('${diaActual}',${i},false)">✖</button>
+</p>`;
 
 });
 
 app.appendChild(card);
 
+
+// ================= PREVISUALIZACIÓN SIGUIENTE DÍA =================
+
+let next=dias[indexDia+1];
+
+if(next){
+
+let preview=document.createElement("div");
+preview.className="preview";
+
+preview.innerHTML="<h3>🔒 Siguiente día: "+next+"</h3>";
+
+rutina[next].forEach(e=>{
+
+preview.innerHTML+="<p>• "+e+"</p>";
+
+});
+
+app.appendChild(preview);
+
 }
 
-let p=Math.round((ok/total)*100)||0;
+
+// ================= ACTUALIZAR PROGRESO =================
+
+let p=calcularProgreso();
+
+// barra visual
 
 document.getElementById("barra").style.width=p+"%";
 
 document.getElementById("info").innerText="Progreso: "+p+"%";
 
+// mensajes
 mostrarLogros(p);
 actualizarRacha(p);
 mostrarNivel(p);
 
 }
 
+
+// ================= GUARDAR SEMANA =================
+
 function guardarSemana(){
 
+// guarda la semana dentro del mes
 semanasMes.push(semana);
 
 localStorage.setItem("semanasMes",JSON.stringify(semanasMes));
 
+// reinicia semana
 semana={};
 localStorage.removeItem("semana");
 
+
+// si hay 4 semanas se guarda el mes
 if(semanasMes.length===4){
 
 meses.push(semanasMes);
@@ -302,6 +441,9 @@ verMeses();
 render();
 
 }
+
+
+// ================= HISTORIAL DE MESES =================
 
 function verMeses(){
 
@@ -350,10 +492,48 @@ cont.innerHTML+=`<p>Mes ${i+1}: ${p}% ${msg}</p>`;
 
 }
 
+
+// ================= REINICIAR PROGRESO =================
+
+function reiniciarTodo(){
+
+let confirmar=confirm("¿Seguro que quieres reiniciar todo el progreso?");
+
+if(confirmar){
+
+localStorage.clear();
+
+semana={};
+semanasMes=[];
+meses=[];
+racha=0;
+ultimoDia="";
+
+render();
+
+alert("Progreso reiniciado");
+
+}
+
+}
+
+
+// ================= RECORDATORIO DE ENTRENAMIENTO =================
+
+setTimeout(()=>{
+
+alert("💪 Recuerda entrenar hoy");
+
+},5000);
+
+
+// inicia la app
 render();
 
 </script>
 
+
+<!-- ================= SERVICE WORKER PARA APP ================= -->
 <script>
 
 if("serviceWorker" in navigator){
